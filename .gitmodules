@@ -1,0 +1,3 @@
+[submodule "src/test/data/rockyou"]
+	path = src/test/data/rockyou
+	url = https://github.com/zacheller/rockyou
