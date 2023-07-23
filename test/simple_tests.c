@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "hashmap.h"
+#include "../hashmap.h"
 
 const char *safestr(const char *str)
 {
@@ -47,6 +47,7 @@ int main(void)
     printf("%s\n", safestr(hashmap_get(map, "Jan", 0)));
     printf("%s\n", safestr(hashmap_get(map, "Flo", 0)));
     printf("%s\n", safestr(hashmap_get(map, &test, sizeof(test))));
+
 
     hashmap_destroy(map);
 

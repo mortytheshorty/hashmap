@@ -3,15 +3,20 @@
 
 #include "misc.h"
 
-#include <inttypes.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <string.h>
 
-/** returns hash index based on quadratic probing */
+
+/**
+ * @brief Returns index based on current loop index and bucketlist capacity
+ * 
+ * @param hash  hash of key
+ * @param i     index
+ * @param cap   capacity
+ * @return size_t 
+ */
 size_t hash_probe(uint64_t hash, size_t i, size_t cap)
 {
 
+    /** this will hit every single bucket index if cap is always a prime number */
     if (i & 1)
     { // odd
         return (hash + -(i * i)) % cap;
@@ -24,7 +29,14 @@ size_t hash_probe(uint64_t hash, size_t i, size_t cap)
 
 /* Definition of prime number functions */
 
-bool IsPrime(size_t n)
+/**
+ * @brief Returns true if number is prime, false if not
+ * 
+ * @param n     number
+ * @return true 
+ * @return false 
+ */
+bool is_prime(size_t n)
 {
     // (n & 1) checks if number is odd
     if ((n & 1) != 0)
@@ -40,35 +52,15 @@ bool IsPrime(size_t n)
     }
     return (n == 2);
 }
+
 /**
- * @brief Get the Next 3 mod 4 Prime number
- *
- * @param direction direction to go to
- * @return size_t
+ * @brief Get the Next Prime object
+ * 
+ * @param n 
+ * @param direction 
+ * @return size_t 
  */
-size_t GetNext3mod4Prime(size_t n, int direction)
-{
-    for (size_t i = (n | 1); i < LONG_MAX && i >= 0; i += (long long)direction)
-    {
-        if (IsPrime(i) && (i & 3) == 3)
-        {
-            return i;
-        }
-    }
-    return n;
-}
-
-size_t GetHigher3mod4Prime(size_t n)
-{
-    return GetNext3mod4Prime(n, HIGHER_PRIME);
-}
-
-size_t GetLower3mod4Prime(size_t n)
-{
-    return GetNext3mod4Prime(n, LOWER_PRIME);
-}
-
-size_t GetNextPrime(size_t n, int direction)
+size_t get_next_prime(size_t n, int direction)
 {
 
     // (n | 1) add 1 to even numbers or let odd number be
@@ -76,7 +68,7 @@ size_t GetNextPrime(size_t n, int direction)
     // if next prime is found it will be returned
     for (size_t i = (n | 1); i < LONG_MAX && i > 0; i += (long long)direction)
     {
-        if (IsPrime(i))
+        if (is_prime(i))
         {
             return i;
         }
@@ -84,29 +76,29 @@ size_t GetNextPrime(size_t n, int direction)
     return n;
 }
 
-size_t GetHigherPrime(size_t n)
+/**
+ * @brief Get the Higher 3 mod 4 Prime object
+ * 
+ * @param n 
+ * @return size_t 
+ */
+size_t get_higher_prime(size_t n)
 {
-    return GetNextPrime(n, HIGHER_PRIME);
+    return get_next_prime(n, HIGHER_PRIME);
 }
 
-size_t GetLowerPrime(size_t n)
+/**
+ * @brief Get the Lower 3 mod 4 Prime object
+ * 
+ * @param n 
+ * @return size_t 
+ */
+size_t get_lower_prime(size_t n)
 {
-    return GetNextPrime(n, LOWER_PRIME);
+    return get_next_prime(n, LOWER_PRIME);
 }
 
 /* hashing functions */
-uint64_t fnv_hash_string(const char *str)
-{
-    size_t hash = FNV_OFFSET;
-
-    while (*str)
-    {
-        hash = hash ^ (size_t)*str;
-        hash = hash * FNV_PRIME;
-        str++;
-    }
-    return hash;
-}
 
 /**
  * @brief Hashes a string or byte data

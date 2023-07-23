@@ -31,6 +31,15 @@ void hashmap_destroy(hashmap_t *map)
     free(map);
 }
 
+/**
+ * @brief Returns the bucket for given key hash
+ * 
+ * @param buckets   pointer to bucket list memory
+ * @param cap       capacity of bucket list
+ * @param key       key to get bucket for
+ * @param keysz     size of key (if not string)
+ * @return bucket_t* 
+ */
 bucket_t *hashmap_get_bucket(bucket_t *buckets, size_t cap, void *key, size_t keysz)
 {
     size_t size = keysz;
@@ -38,13 +47,13 @@ bucket_t *hashmap_get_bucket(bucket_t *buckets, size_t cap, void *key, size_t ke
 
     for (size_t i = 0; i < cap; i++)
     {
-
         size_t probe = hash_probe(hash, i, cap);
 
         if (buckets[probe].key == NULL)
         {
             buckets[probe].keysz = size;
             return &buckets[probe];
+
         }
 
         if (buckets[probe].keysz != size)
@@ -62,11 +71,17 @@ bucket_t *hashmap_get_bucket(bucket_t *buckets, size_t cap, void *key, size_t ke
     return NULL;
 }
 
+/**
+ * @brief Calculates the new capacity (based on fillage)
+ * 
+ * @param map   pointer to hashmap
+ * @return size_t 
+ */
 size_t hashmap_newcap(hashmap_t *map)
 {
     size_t new_cap = 0;
 
-    double fillage = (double)map->count / map->cap;
+    double fillage = (double) map->count / (double) map->cap;
 
     if (map->count == 0)
     {
@@ -74,11 +89,11 @@ size_t hashmap_newcap(hashmap_t *map)
     }
     else if (fillage > HASHMAP_REBUILD_FACTOR)
     {
-        new_cap = GetNext3mod4Prime(map->cap * 2, HIGHER_PRIME);
+        new_cap = get_higher_prime(map->cap * 2);
     }
     else if (fillage < (HASHMAP_REBUILD_FACTOR / 2))
     {
-        new_cap = GetNext3mod4Prime(map->cap / 2, LOWER_PRIME);
+        new_cap = get_lower_prime(map->cap / 2);
     }
     else
     {
@@ -88,6 +103,12 @@ size_t hashmap_newcap(hashmap_t *map)
     return new_cap;
 }
 
+/**
+ * @brief 
+ * 
+ * @param map 
+ * @return int 
+ */
 int hashmap_rebuild(hashmap_t *map)
 {
     size_t newcap = hashmap_newcap(map);
@@ -103,6 +124,7 @@ int hashmap_rebuild(hashmap_t *map)
         return -1; // mem error
     }
 
+    /* iterate over the hashmap and insert buckets into the new allocated memory */
     for (size_t i = 0; i < map->cap; i++)
     {
         if (map->buckets[i].key == NULL)
@@ -191,7 +213,7 @@ size_t hashmap_count(hashmap_t *map)
 
 double hashmap_fillage(hashmap_t *map)
 {
-    return (double)map->count / map->cap;
+    return (double) map->count / (double) map->cap;
 }
 
 void hashmap_info(hashmap_t *map)
@@ -206,6 +228,6 @@ void hashmap_info(hashmap_t *map)
         if (map->buckets[i].key == NULL)
             continue;
 
-        printf("Key: %s, KeySz: %zu, Data: %s\n", map->buckets[i].key, map->buckets[i].keysz, map->buckets[i].data);
+        printf("Key: %s, KeySz: %zu, Data: %s\n", (char*) map->buckets[i].key, map->buckets[i].keysz, (char*) map->buckets[i].data);
     }
 }
