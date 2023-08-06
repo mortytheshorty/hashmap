@@ -1,9 +1,87 @@
 #include "hashmap.h"
-#include "misc.h"
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <limits.h>
 #include <string.h>
 
-#define HASHMAP_REBUILD_FACTOR 0.5
+/*********************************************************************************************************/
+/*                                                DEFINITIONS                                            */
+/*********************************************************************************************************/
+
+/**
+ * @brief Factor of fillage when to grow or shrink
+ */
+#define HASHMAP_REBUILD_FACTOR 0.7
+
+/** @brief Offset for FVN-Hashing
+ */
+#define FNV_OFFSET 0xCBF29CE484222325
+
+/** @brief Prime for xor overation on character
+ */
+#define FNV_PRIME 0x1099511628211
+
+/** @brief next higher direction for GetNextPrime
+ */
+#define HIGHER_PRIME 2
+/** @brief next lower direction for GetNextPrime
+ */
+#define LOWER_PRIME -2
+
+
+/**********************************************************************************************************/
+/*                                      MISCELLANEOUS FUNCTION PROTOTYPES                                 */
+/**********************************************************************************************************/
+
+/** @brief Returns hash index based on quadratic probing
+ * @param[in]   hash uint64 hash
+ * @param[in]   i index of loop
+ * @param[in]   cap capacity of bucket list
+ */
+size_t hash_probe(uint64_t hash, size_t i, size_t cap);
+
+/** @brief Test if number is prime function
+ * @param[in]     n   number to test
+ * @retval    true
+ * @retval    false
+ */
+bool is_prime(size_t n);
+
+/**
+ * @brief Get the Next 3 mod 4 Prime number
+ *
+ * @param direction direction to go to
+ * @return size_t
+ */
+size_t get_next_prime(size_t n, int direction);
+
+/**
+ * @brief Get the next higher 3mod 4 congruent Prime number
+ *
+ * @param n number to get the next heigher prime from
+ * @retval  next higher 3mod4 congruent prime number
+ */
+size_t get_higher_prime(size_t n);
+
+/**
+ * @brief Get the next lower 3mod 4 congruent Prime number
+ *
+ * @param n number to get the next lower prime from
+ * @retval  next higher 3mod4 congruent prime number
+ */
+size_t get_lower_prime(size_t n);
+
+/** @brief Get FVN-Hash by bytedata
+ @param[in]     data    bytes to hash
+ @param[in]     size    size of bytes to hash
+ @retval    uint64_t hash
+*/
+uint64_t fnv_hash(void *data, size_t *size);
+
+
+
+
 
 hashmap_t *hashmap_create()
 {
@@ -230,4 +308,80 @@ void hashmap_info(hashmap_t *map)
 
         printf("Key: %s, KeySz: %zu, Data: %s\n", (char*) map->buckets[i].key, map->buckets[i].keysz, (char*) map->buckets[i].data);
     }
+}
+
+
+size_t hash_probe(uint64_t hash, size_t i, size_t cap)
+{
+
+    /** this will hit every single bucket index if cap is always a prime number */
+    if (i & 1)
+    { // odd
+        return (hash + -(i * i)) % cap;
+    }
+    else
+    {
+        return (hash + (i * i)) % cap;
+    }
+}
+
+bool is_prime(size_t n)
+{
+    // (n & 1) checks if number is odd
+    if ((n & 1) != 0)
+    {
+        for (size_t divisor = 3; divisor <= n / divisor; divisor += 2)
+        {
+            if ((n % divisor) == 0)
+            {
+                return 0;
+            }
+        }
+        return n > 1;
+    }
+    return (n == 2);
+}
+
+size_t get_next_prime(size_t n, int direction)
+{
+
+    // (n | 1) add 1 to even numbers or let odd number be
+    // direction should be +2 or -2 to step up or down by to because prime numbers are all odd
+    // if next prime is found it will be returned
+    for (size_t i = (n | 1); i < LONG_MAX && i > 0; i += (long long)direction)
+    {
+        if (is_prime(i))
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
+size_t get_higher_prime(size_t n)
+{
+    return get_next_prime(n, HIGHER_PRIME);
+}
+
+size_t get_lower_prime(size_t n)
+{
+    return get_next_prime(n, LOWER_PRIME);
+}
+
+uint64_t fnv_hash(void *data, size_t *size)
+{
+    size_t hash = FNV_OFFSET;
+    unsigned char *d = data;
+
+    if (*size == 0)
+    {
+        *size = strlen(data);
+    }
+    size_t size_bak = *size;
+    while (size_bak--)
+    {
+        hash = hash ^ *d++;
+        hash = hash * FNV_PRIME;
+    }
+    return hash;
 }
